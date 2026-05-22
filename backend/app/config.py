@@ -1,18 +1,15 @@
 import os
 from pydantic_settings import BaseSettings
 
+# Fetch and dynamically normalize 'postgres://' to 'postgresql://' outside the Settings class
+# to prevent Pydantic 2.x from treating 'db_url' as a non-annotated model attribute.
+_db_url = os.getenv("DATABASE_URL", "sqlite:///./career_portal.db")
+if _db_url.startswith("postgres://"):
+    _db_url = _db_url.replace("postgres://", "postgresql://", 1)
+
 class Settings(BaseSettings):
     PROJECT_NAME: str = "Career Guidance Portal API"
-    
-    # Database
-    # Fallback to local SQLite file for ease of local testing and zero-setup startup.
-    # On Render, this will be overridden by the DATABASE_URL environment variable.
-    # We dynamically normalize 'postgres://' to 'postgresql://' as required by SQLAlchemy 2.x
-    db_url = os.getenv("DATABASE_URL", "sqlite:///./career_portal.db")
-    if db_url.startswith("postgres://"):
-        db_url = db_url.replace("postgres://", "postgresql://", 1)
-    
-    DATABASE_URL: str = db_url
+    DATABASE_URL: str = _db_url
     
     # JWT Configuration
     JWT_SECRET: str = os.getenv("JWT_SECRET", "super-secret-key-change-in-production")
