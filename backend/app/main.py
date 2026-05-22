@@ -1,4 +1,5 @@
 import os
+from urllib.parse import urlparse
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
@@ -13,18 +14,50 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Career Guidance Portal API")
 
+# Helper function to sanitize a URL and extract just the origin (scheme + netloc)
+def clean_cors_origin(url: str) -> str:
+    url = url.strip()
+    if not url:
+        return ""
+    # Ensure a protocol exists before passing to urlparse, otherwise netloc is not parsed
+    if not url.startswith("http://") and not url.startswith("https://"):
+        url = "https://" + url
+    parsed = urlparse(url)
+    if parsed.scheme and parsed.netloc:
+        return f"{parsed.scheme}://{parsed.netloc}"
+    return url
+
 # Configure CORS Middleware to allow requests from the React frontend.
 # Useful for Vercel deployments and local Vite server.
-origins = [
+raw_origins = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
     "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "https://student-connect-liard.vercel.app",
+    "https://student-connect-hub-five.vercel.app",
 ]
+
+# Allow configuring allowed origins via environment variable
+allowed_origins_env = os.getenv("ALLOWED_ORIGINS")
+if allowed_origins_env:
+    for origin in allowed_origins_env.split(","):
+        raw_origins.append(origin)
 
 # Add production domains dynamically if running on Vercel
 vercel_url = os.getenv("VERCEL_URL")
 if vercel_url:
-    origins.append(f"https://{vercel_url}")
+    for url in vercel_url.split(","):
+        raw_origins.append(url)
+
+# Clean, normalize and deduplicate all origins
+origins = []
+for origin in raw_origins:
+    cleaned = clean_cors_origin(origin)
+    if cleaned:
+        origins.append(cleaned)
+
+origins = list(set(origins))
 
 app.add_middleware(
     CORSMiddleware,
