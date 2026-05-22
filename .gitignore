@@ -1,0 +1,24 @@
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# Node modules (Frontend dependencies)
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# Databases and local logs
+*.db
+*.sqlite3
+*.log
+
+# IDE settings
+.vscode/
+.idea/
+.DS_Store
+.env
+.env.production
+.env.local

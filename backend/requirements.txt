@@ -10,4 +10,4 @@ email-validator>=2.0.0
 
 # PostgreSQL driver for production deployment (Render)
 # Uncomment the line below before pushing to Git for production deployment
-# psycopg2-binary
+psycopg2-binary
